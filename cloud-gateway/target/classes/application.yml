@@ -1,0 +1,52 @@
+
+
+spring:
+  application:
+    name: API-GATEWAY
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user/**,/address/**,/customer/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: USER-SERVICE
+                fallbackuri: forward:/userServiceFallBack
+        - id: MANUFACTURING-SERVICE
+          uri: lb://MANUFACTURING-SERVICE
+          predicates:
+            - Path=/manufacturer/**,/crops/**,/fertilizers/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: MANUFACTURING-SERVICE
+                fallbackuri: forward:/manufacturerServiceFallBack
+
+
+        - id: SECURITY-SERVICE
+          uri: lb://SECURITY-SERVICE
+          predicates:
+            - Path=/security/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: SECURITY-SERVICE
+                fallbackuri: forward:/securityServiceFallBack
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 4000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
